@@ -1,0 +1,260 @@
+Index: app/src/main/java/com/example/androidtest/MainActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.androidtest;\n\nimport android.os.AsyncTask;\nimport android.os.Bundle;\nimport android.os.Message;\nimport android.util.Log;\nimport android.view.View;\nimport android.widget.ProgressBar;\nimport android.widget.ScrollView;\nimport android.widget.TextView;\n\nimport androidx.appcompat.app.AppCompatActivity;\nimport androidx.fragment.app.FragmentManager;\n\nimport com.example.androidtest.thread.BackgroundThread;\nimport com.example.androidtest.thread.Playlist;\n\n\npublic class MainActivity extends AppCompatActivity implements AsyncFragment.MyTaskHandler {\n\n    private static final String TAG = \"MyResult\";\n    private static final String FRAGMENT_TAG = \"FragmentTag\";\n\n    private ScrollView mScroll;\n    private TextView mLog;\n    private ProgressBar mProgressBar;\n\nprivate AsyncFragment asyncFragment;\n\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(R.layout.activity_main);\n        initViews();\n\n\n        FragmentManager manager = getSupportFragmentManager();\n        asyncFragment = (AsyncFragment) manager.findFragmentByTag(FRAGMENT_TAG);\n        if(asyncFragment == null){\n            asyncFragment = new AsyncFragment();\n            manager.beginTransaction().add(asyncFragment, FRAGMENT_TAG).commit();\n        }\n\n    }\n\n\n\n    public void runCode(View v) {\n\n        asyncFragment.runTask(\"Red\", \"Green\", \"Blue\", \"Yello\");\n\n    };\n\n\n\n    private void initViews() {\n        mScroll = (ScrollView) findViewById(R.id.scrollLog);\n        mLog = (TextView) findViewById(R.id.tvLog);\n        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);\n    }\n\n    public void clearOutput(View v) {\n        mLog.setText(\"\");\n        scrollTextToEnd();\n    }\n\n    public void log(String message) {\n        Log.i(TAG, message);\n        mLog.append(message + \"\\n\");\n        scrollTextToEnd();\n    }\n\n    private void scrollTextToEnd() {\n        mScroll.post(new Runnable() {\n            @Override\n            public void run() {\n                mScroll.fullScroll(ScrollView.FOCUS_DOWN);\n            }\n        });\n    }\n\n    public void displayProgressBar(boolean display) {\n        if (display) {\n            mProgressBar.setVisibility(View.VISIBLE);\n        } else {\n            mProgressBar.setVisibility(View.INVISIBLE);\n        }\n    }\n\n    @Override\n    public void handleTask(String message) {\n        log(message);\n    }\n\n\n\n\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/androidtest/MainActivity.java	(revision bac89eea8913bc1ffc69fc7611211f7feac8e5f5)
++++ app/src/main/java/com/example/androidtest/MainActivity.java	(date 1610469368000)
+@@ -16,7 +16,7 @@
+ import com.example.androidtest.thread.Playlist;
+ 
+ 
+-public class MainActivity extends AppCompatActivity implements AsyncFragment.MyTaskHandler {
++public class MainActivity extends AppCompatActivity{
+ 
+     private static final String TAG = "MyResult";
+     private static final String FRAGMENT_TAG = "FragmentTag";
+@@ -25,7 +25,7 @@
+     private TextView mLog;
+     private ProgressBar mProgressBar;
+ 
+-private AsyncFragment asyncFragment;
++
+ 
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+@@ -34,12 +34,6 @@
+         initViews();
+ 
+ 
+-        FragmentManager manager = getSupportFragmentManager();
+-        asyncFragment = (AsyncFragment) manager.findFragmentByTag(FRAGMENT_TAG);
+-        if(asyncFragment == null){
+-            asyncFragment = new AsyncFragment();
+-            manager.beginTransaction().add(asyncFragment, FRAGMENT_TAG).commit();
+-        }
+ 
+     }
+ 
+@@ -47,7 +41,6 @@
+ 
+     public void runCode(View v) {
+ 
+-        asyncFragment.runTask("Red", "Green", "Blue", "Yello");
+ 
+     };
+ 
+@@ -87,10 +80,7 @@
+         }
+     }
+ 
+-    @Override
+-    public void handleTask(String message) {
+-        log(message);
+-    }
++
+ 
+ 
+ 
+Index: app/src/main/java/com/example/androidtest/AsyncFragment.java
+===================================================================
+--- app/src/main/java/com/example/androidtest/AsyncFragment.java	(revision bac89eea8913bc1ffc69fc7611211f7feac8e5f5)
++++ app/src/main/java/com/example/androidtest/AsyncFragment.java	(revision bac89eea8913bc1ffc69fc7611211f7feac8e5f5)
+@@ -1,93 +0,0 @@
+-package com.example.androidtest;
+-
+-import android.content.Context;
+-import android.os.AsyncTask;
+-import android.os.Bundle;
+-import android.util.Log;
+-
+-import androidx.annotation.NonNull;
+-import androidx.annotation.Nullable;
+-import androidx.fragment.app.Fragment;
+-
+-public class AsyncFragment extends Fragment {
+-    private static final String TAG = "MyResult";
+-
+-    private MyTaskHandler myTaskHandler;
+-    @Override
+-    public void onCreate(@Nullable Bundle savedInstanceState) {
+-        super.onCreate(savedInstanceState);
+-        setRetainInstance(true);
+-
+-    }
+-
+-    public interface MyTaskHandler{
+-        void handleTask(String message);
+-    }
+-
+-    @Override
+-    public void onAttach(@NonNull Context context) {
+-        super.onAttach(context);
+-        Log.d(TAG, "onAttach: Fragment");
+-        if (context instanceof MyTaskHandler){
+-            myTaskHandler = (MyTaskHandler) (context);
+-        }
+-    }
+-
+-
+-    public void runTask(String...params){
+-        AsyncDownload myTask = new AsyncDownload();
+-        myTask.execute(params);
+-
+-    }
+-
+-    class AsyncDownload extends AsyncTask<String, String, String> {
+-
+-
+-
+-
+-        @Override
+-        protected String doInBackground(String... strings) {
+-
+-            for(String val : strings){
+-                publishProgress(val);
+-
+-                try {
+-                    Thread.sleep(1000);
+-                } catch (InterruptedException e) {
+-                    e.printStackTrace();
+-                }
+-
+-                if(isCancelled()){
+-                    publishProgress("Task Cancelled");
+-                    break;
+-                }
+-            }
+-
+-
+-
+-
+-            return null;
+-        }
+-
+-
+-        @Override
+-        protected void onPreExecute() {
+-            super.onPreExecute();
+-        }
+-
+-        @Override
+-        protected void onPostExecute(String s) {
+-            super.onPostExecute(s);
+-        }
+-
+-        @Override
+-        protected void onProgressUpdate(String... values) {
+-            myTaskHandler.handleTask(values[0]);
+-        }
+-
+-        @Override
+-        protected void onCancelled(String s) {
+-            super.onCancelled(s);
+-        }
+-    }
+-}
+Index: app/src/main/java/com/example/androidtest/thread/Playlist.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/androidtest/thread/Playlist.java	(date 1610458971000)
++++ app/src/main/java/com/example/androidtest/thread/Playlist.java	(date 1610458971000)
+@@ -0,0 +1,6 @@
++package com.example.androidtest.thread;
++
++public class Playlist {
++
++    public static String[] playlist = {"Pakistan Zindabad", "Dil Dil Pakistan", "Utho Mujahido"};
++}
+Index: app/src/main/java/com/example/androidtest/thread/BackgroundThread.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/androidtest/thread/BackgroundThread.java	(date 1610458971000)
++++ app/src/main/java/com/example/androidtest/thread/BackgroundThread.java	(date 1610458971000)
+@@ -0,0 +1,29 @@
++package com.example.androidtest.thread;
++
++import android.os.Handler;
++import android.os.Looper;
++import android.os.Message;
++import android.util.Log;
++
++import com.example.androidtest.MainActivity;
++
++public class BackgroundThread extends Thread {
++    private boolean startLoop = true;
++    private static final String TAG = "MyResult";
++    int count;
++    public MyHandler handler;
++
++
++    private MainActivity mActivity;
++    public BackgroundThread(MainActivity activity){
++        this.mActivity = activity;
++    }
++
++
++    @Override
++    public void run() {
++        Looper.prepare();
++        handler = new MyHandler(mActivity);
++       Looper.loop();
++    }
++}
+Index: app/src/main/java/com/example/androidtest/thread/MyHandler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/androidtest/thread/MyHandler.java	(date 1610458724000)
++++ app/src/main/java/com/example/androidtest/thread/MyHandler.java	(date 1610458724000)
+@@ -0,0 +1,43 @@
++package com.example.androidtest.thread;
++
++
++import android.os.Handler;
++import android.os.Message;
++import android.util.Log;
++
++import androidx.annotation.NonNull;
++
++import com.example.androidtest.MainActivity;
++
++class MyHandler extends Handler {
++    private static final String TAG = "MyResult";
++
++    private MainActivity mActivity;
++    public MyHandler(MainActivity activity){
++        this.mActivity = activity;
++    }
++    @Override
++    public void handleMessage(@NonNull  Message msg) {
++
++        try {
++            Thread.sleep(5000);
++        } catch (InterruptedException e) {
++            e.printStackTrace();
++        }
++
++        printData(msg.obj.toString());
++
++    }
++
++
++    private void printData(final String msg){
++        mActivity.runOnUiThread(new Runnable() {
++            @Override
++            public void run() {
++                Log.d(TAG, "run: "+msg.toString());
++                 mActivity.log(msg);
++            }
++        });
++    }
++
++}

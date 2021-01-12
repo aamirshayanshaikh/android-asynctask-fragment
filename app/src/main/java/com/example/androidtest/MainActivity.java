@@ -1,8 +1,6 @@
 package com.example.androidtest;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -10,13 +8,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentManager;
 
-import com.example.androidtest.thread.BackgroundThread;
-import com.example.androidtest.thread.Playlist;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-
-public class MainActivity extends AppCompatActivity implements AsyncFragment.MyTaskHandler {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MyResult";
     private static final String FRAGMENT_TAG = "FragmentTag";
@@ -25,7 +22,7 @@ public class MainActivity extends AppCompatActivity implements AsyncFragment.MyT
     private TextView mLog;
     private ProgressBar mProgressBar;
 
-private AsyncFragment asyncFragment;
+    private ExecutorService mExecutor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,23 +30,19 @@ private AsyncFragment asyncFragment;
         setContentView(R.layout.activity_main);
         initViews();
 
-
-        FragmentManager manager = getSupportFragmentManager();
-        asyncFragment = (AsyncFragment) manager.findFragmentByTag(FRAGMENT_TAG);
-        if(asyncFragment == null){
-            asyncFragment = new AsyncFragment();
-            manager.beginTransaction().add(asyncFragment, FRAGMENT_TAG).commit();
-        }
+        mExecutor = Executors.newFixedThreadPool(5);
 
     }
 
 
-
     public void runCode(View v) {
 
-        asyncFragment.runTask("Red", "Green", "Blue", "Yello");
+        for(int i=0; i<10; i++){
+            MultipleTasks m = new MultipleTasks(i+1, this);
+            mExecutor.execute(m);
+        }
 
-    };
+    }
 
 
 
@@ -86,13 +79,6 @@ private AsyncFragment asyncFragment;
             mProgressBar.setVisibility(View.INVISIBLE);
         }
     }
-
-    @Override
-    public void handleTask(String message) {
-        log(message);
-    }
-
-
 
 
 }
